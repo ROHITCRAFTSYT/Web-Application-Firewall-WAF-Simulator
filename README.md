@@ -2,8 +2,6 @@
 
 A lightweight web application that simulates the behavior of a Web Application Firewall (WAF) to demonstrate how common web attacks are detected and blocked.
 
-![WAF Simulator Screenshot](https://via.placeholder.com/800x450.png?text=WAF+Simulator+Screenshot)
-
 ## Overview
 
 WAF Simulator provides an interactive environment where users can enter HTTP requests and see how a WAF would process and respond to potential security threats. This tool is designed for educational purposes to help developers and security professionals understand how WAFs protect web applications from common attack vectors.
