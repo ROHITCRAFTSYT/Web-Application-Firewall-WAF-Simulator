@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WAF Simulator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-2xl">
+        <h1 class="text-2xl font-bold mb-4 text-center">Web Application Firewall (WAF) Simulator</h1>
+        <p class="text-gray-600 mb-4">Enter an HTTP request to simulate how a WAF processes it. The WAF checks for SQL injection, XSS, and malicious paths.</p>
+        
+        <div class="mb-4">
+            <label for="requestInput" class="block text-sm font-medium text-gray-700">HTTP Request</label>
+            <textarea id="requestInput" class="mt-1 block w-full border border-gray-300 rounded-md p-2" rows="4" placeholder="e.g., GET /login?username=admin' OR 1=1 --"></textarea>
+        </div>
+        
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700">WAF Rules Enabled</label>
+            <div class="mt-2 space-y-2">
+                <label class="flex items-center">
+                    <input type="checkbox" id="sqlInjection" checked class="mr-2">
+                    <span>SQL Injection Detection</span>
+                </label>
+                <label class="flex items-center">
+                    <input type="checkbox" id="xss" checked class="mr-2">
+                    <span>XSS Detection</span>
+                </label>
+                <label class="flex items-center">
+                    <input type="checkbox" id="maliciousPath" checked class="mr-2">
+                    <span>Malicious Path Detection</span>
+                </label>
+            </div>
+        </div>
+        
+        <button id="simulateBtn" class="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600">Simulate WAF</button>
+        
+        <div id="result" class="mt-4 p-4 border rounded-md hidden">
+            <p id="status" class="font-bold"></p>
+            <p id="reason" class="text-gray-600"></p>
+        </div>
+    </div>
+
+    <script>
+        // WAF Rule Definitions
+        const wafRules = {
+            sqlInjection: [
+                /select.*from/i,
+                /union.*select/i,
+                /or\s+1=1/i,
+                /--/i,
+                /;.*exec/i
+            ],
+            xss: [
+                /<script>/i,
+                /javascript:/i,
+                /on\w+\s*=/i,
+                /alert\(/i
+            ],
+            maliciousPath: [
+                /\.php/i,
+                /wp-admin/i,
+                /\/etc\/passwd/i,
+                /\.env/i
+            ]
+        };
+
+        // Simulate WAF processing
+        function simulateWAF(request) {
+            const sqlInjectionEnabled = document.getElementById('sqlInjection').checked;
+            const xssEnabled = document.getElementById('xss').checked;
+            const maliciousPathEnabled = document.getElementById('maliciousPath').checked;
+
+            let status = 'Allowed';
+            let reason = 'Request passed all WAF rules.';
+
+            // Check SQL Injection
+            if (sqlInjectionEnabled) {
+                for (let pattern of wafRules.sqlInjection) {
+                    if (pattern.test(request)) {
+                        status = 'Blocked';
+                        reason = 'Detected potential SQL Injection pattern.';
+                        break;
+                    }
+                }
+            }
+
+            // Check XSS
+            if (xssEnabled && status === 'Allowed') {
+                for (let pattern of wafRules.xss) {
+                    if (pattern.test(request)) {
+                        status = 'Blocked';
+                        reason = 'Detected potential XSS attack pattern.';
+                        break;
+                    }
+                }
+            }
+
+            // Check Malicious Path
+            if (maliciousPathEnabled && status === 'Allowed') {
+                for (let pattern of wafRules.maliciousPath) {
+                    if (pattern.test(request)) {
+                        status = 'Blocked';
+                        reason = 'Detected malicious path or file access attempt.';
+                        break;
+                    }
+                }
+            }
+
+            return { status, reason };
+        }
+
+        // Handle Simulate Button Click
+        document.getElementById('simulateBtn').addEventListener('click', () => {
+            const request = document.getElementById('requestInput').value.trim();
+            const resultDiv = document.getElementById('result');
+            const statusP = document.getElementById('status');
+            const reasonP = document.getElementById('reason');
+
+            if (!request) {
+                resultDiv.classList.remove('hidden');
+                resultDiv.classList.add('border-red-500');
+                statusP.textContent = 'Error';
+                statusP.classList.add('text-red-500');
+                reasonP.textContent = 'Please enter a valid HTTP request.';
+                return;
+            }
+
+            const { status, reason } = simulateWAF(request);
+
+            resultDiv.classList.remove('hidden');
+            statusP.textContent = status;
+            reasonP.textContent = reason;
+
+            if (status === 'Allowed') {
+                resultDiv.classList.remove('border-red-500');
+                resultDiv.classList.add('border-green-500');
+                statusP.classList.remove('text-red-500');
+                statusP.classList.add('text-green-500');
+            } else {
+                resultDiv.classList.remove('border-green-500');
+                resultDiv.classList.add('border-red-500');
+                statusP.classList.remove('text-green-500');
+                statusP.classList.add('text-red-500');
+            }
+        });
+    </script>
+</body>
+</html>
